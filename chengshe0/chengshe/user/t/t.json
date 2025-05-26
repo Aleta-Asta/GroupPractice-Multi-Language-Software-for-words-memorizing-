@@ -1,0 +1,12 @@
+{
+    "Username": {
+        "name": "让三颗心免于哀伤"
+    },
+    "MainWindow": {
+        "primaryColor": "#ffff0e6a"
+    },
+    "QFluentWidgets": {
+        "ThemeColor": "#ffff0e6a",
+        "ThemeMode": "Light"
+    }
+}
