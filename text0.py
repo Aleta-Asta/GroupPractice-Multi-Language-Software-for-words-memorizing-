@@ -1,5 +1,7 @@
 from random import randint, random, shuffle, sample
 from time import time
+from datetime import datetime
+# TODO 2: 使用datetime库获取当前时间,以便于后续数据记录
 import pandas as pd
 import matplotlib.pyplot as plt
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 设置中文黑体
@@ -15,6 +17,7 @@ class VocabularyLearningSystem:
             self.wa = 0  # 答错题目数
             self.time = []  # 耗时记录
             self.is_correct = []  # 新增：记录每题正误
+            self.data=datetime.today().strftime('%Y-%m-%d')  # 新增：记录数据生成时间
 
         def add_ac(self, t):
             self.ac += 1
@@ -33,7 +36,7 @@ class VocabularyLearningSystem:
         self.df2 = pd.read_excel('Data/record.xlsx', index_col=0, sheet_name='Sheet1')
         self.df3 = pd.read_excel('Data/review.xlsx', index_col=0, sheet_name='Sheet1')
         self.df4 = pd.read_excel('Data/book.xlsx', index_col=0, sheet_name='Sheet1')
-
+        self.df5 = pd.read_excel('Data/day_record.xlsx',index_col=0 ,sheet_name='Sheet1')
         self.mainlanguage = None
         self.studylanguage = None
         self.record = self.RecordAC()
@@ -156,6 +159,40 @@ class VocabularyLearningSystem:
         print(f"总耗时：{total_time:.2f}秒")
         print(f"平均答题时间：{total_time / len(self.record.time):.2f}秒")
 
+    def update_day_stats(self):
+        """更新每日统计"""
+        today = datetime.today().strftime('%Y-%m-%d')
+        if today not in self.df5.index:
+            self.df5.loc[today] = [self.record.ac+self.record.wa,self.record.ac, self.record.wa ]
+        else:
+            self.df5.loc[today, 'ac'] += self.record.ac
+            self.df5.loc[today, 'wa'] += self.record.wa
+            self.df5.loc[today, 'total'] += self.record.ac + self.record.wa
+        self.df5.to_excel('Data/day_record.xlsx', index=True)
+
+    def show_day_stats(self):
+        """显示每日统计折线图"""
+        if self.df5.empty:
+            print("暂无每日统计数据！")
+            return
+        df = self.df5.copy()
+        df = df.sort_index()
+        dates = df.index.tolist()
+        ac = df['ac'].tolist()
+        wa = df['wa'].tolist()
+        total = [a + w for a, w in zip(ac, wa)]
+
+        plt.figure(figsize=(10, 5))
+        plt.plot(dates, ac, marker='o', label='正确(ac)')
+        plt.plot(dates, wa, marker='o', label='错误(wa)')
+        plt.plot(dates, total, marker='o', label='总答题数')
+        plt.xlabel('日期')
+        plt.ylabel('题目数')
+        plt.title('每日答题统计')
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
     def run(self):
         """主运行循环"""
         print("欢迎使用智能单词学习系统！")
@@ -192,6 +229,7 @@ class VocabularyLearningSystem:
             if input("继续学习？(y/n) ").lower() != 'y':
                 self.show_stats()
                 break
+        self.update_day_stats()
         # 绘图部分
         x = list(range(1, len(self.record.time) + 1))
         y = self.record.time
@@ -214,6 +252,7 @@ class VocabularyLearningSystem:
         plt.grid(True)
         plt.tight_layout()
         plt.show()
+        self.show_day_stats()
 
 
 if __name__ == "__main__":
